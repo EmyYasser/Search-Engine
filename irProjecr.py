@@ -28,8 +28,7 @@ for printfiles in myFiles:
              if word not in stopWords:
                 terms.append(word)
         DocTerms.append(terms)
-        # print("\n")
-        # print(DocTerms) // true
+        # print(DocTerms)  #true
 
         # print(dict.fromkeys(terms,0))
 # //////////////////////////////////
@@ -115,9 +114,55 @@ print(normalized_term_freq)
 
 # //////////////////////////////////
 
+# *********************** positional_index  ***********************
+document_number =0
+positional_index={}
+
+for document in DocTerms:
+
+    for positional ,term in enumerate(document):
+
+        if term in positional_index:
+
+            positional_index[term][0]=positional_index[term][0]+1
+
+            if document_number in positional_index[term][1]:
+                positional_index[term][1][document_number].append(positional)
+
+            else:
+                positional_index[term][1][document_number] = [positional]
+
+        else:
+                positional_index[term]=[]
+
+                positional_index[term].append(1)
+
+                positional_index[term].append({})
+
+                positional_index[term][1][document_number]=[positional]
+
+    document_number+=1
+# print(positional_index)
 
 
+#\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
+query='fools fear '
+final_list =[[]for i in range(10)]
+
+for word in query.split():
+    for key in positional_index[word][1].keys():
+
+        if final_list[key-1]!=[]:
+            if final_list[key-1][-1]==positional_index[word][1][key][0]-1:
+                final_list[key-1].append(positional_index[word][1][key][0])
+        else:
+            final_list[key-1].append(positional_index[word][1][key][0])
+print(final_list)
+for position,list in enumerate(final_list,start=1):
+    # print(position,list)
+    if len(list)== len(query.split()):
+        print(position)
 
 
 
