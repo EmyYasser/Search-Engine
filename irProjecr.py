@@ -6,6 +6,7 @@ import pandas as pd #part3
 import numpy as np  #part3
 import math
 
+q= 'antony brutus'
 
 stopWords= set(stopwords.words("english")) 
 # print(stopWords)
@@ -147,10 +148,10 @@ for document in DocTerms:
 
 #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-query='fools fear '
+# query='fools fear '
 final_list =[[]for i in range(10)]
 
-for word in query.split():
+for word in q.split():
     for key in positional_index[word][1].keys():
 
         if final_list[key-1]!=[]:
@@ -161,13 +162,13 @@ for word in query.split():
 print(final_list)
 for position,list in enumerate(final_list,start=1):
     # print(position,list)
-    if len(list)== len(query.split()):
+    if len(list)== len(q.split()):
         print(position)
 
 
 #//////////////////////////////////////////
 
-q= 'antony brutus'
+# q= 'antony brutus'
 
 def get_w_tf (x):
     try:
