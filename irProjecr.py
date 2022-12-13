@@ -247,6 +247,33 @@ d_query(q)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # myFile = open("7.txt","r")
 # print(myFile.read())
 # myFile.close() 
