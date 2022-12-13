@@ -29,9 +29,74 @@ for printfiles in myFiles:
              if word not in stopWords:
                 terms.append(word)
         DocTerms.append(terms)
-        # print(DocTerms)  #true
+        
 
         # print(dict.fromkeys(terms,0))
+print("Terms after tokanization and remove stop words")        
+print(DocTerms) 
+#\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+# part 2
+####### positional index #########
+document_number = 0
+positional_index = {}
+for document in DocTerms:
+
+    # For position and term in the tokens.
+    for positional, term in enumerate(document):
+        # print(pos, '-->' ,term)
+        
+        # If term already exists in the positional index dictionary.
+        if term in positional_index:
+                
+            # Increment total freq by 1.
+            positional_index[term][0] = positional_index[term][0] + 1
+                
+            # Check if the term has existed in that DocID before.
+            if document_number in positional_index[term][1]:
+                positional_index[term][1][document_number].append(positional)
+                    
+            else:
+                positional_index[term][1][document_number] = [positional]
+
+        # If term does not exist in the positional index dictionary
+        # (first encounter).
+        else:
+            
+            # Initialize the list.
+            positional_index[term] = []
+            # The total frequency is 1.
+            positional_index[term].append(1)
+            # The postings list is initially empty.
+            positional_index[term].append({})     
+            # Add doc ID to postings list.
+            positional_index[term][1][document_number] = [positional]
+
+    # Increment the file no. counter for document ID mapping             
+    document_number += 1
+
+print('************************Positional index*************************')
+print(positional_index)
+
+query = input('Enter Phrase Query: ')
+# print(query.loc[q.split()])
+def query_input(q):
+    final_list =[[]for i in range(10)]
+
+    for word in q.split():
+        for key in positional_index[word][1].keys():
+
+            if final_list[key-1]!=[]:
+                if final_list[key-1][-1]==positional_index[word][1][key][0]-1:
+                    final_list[key-1].append(positional_index[word][1][key][0])
+            else:
+                final_list[key-1].append(positional_index[word][1][key][0])
+    print(final_list)
+    for position,list in enumerate(final_list,start=1):
+         print(position,list)
+         if len(list)== len(q.split()):
+            # print(position)
+           return position
+    print(query_input(query))
 # //////////////////////////////////
 # part3
 allWords=[]
@@ -110,62 +175,6 @@ for column in term_freq_inverse.columns:
 
 print("*********************** Normalized tf.idf ***********************")
 print(normalized_term_freq)
-
-# *********************** Cosine similaitry  ***********************
-
-# //////////////////////////////////
-
-# *********************** positional_index  ***********************
-document_number =0
-positional_index={}
-
-for document in DocTerms:
-
-    for positional ,term in enumerate(document):
-
-        if term in positional_index:
-
-            positional_index[term][0]=positional_index[term][0]+1
-
-            if document_number in positional_index[term][1]:
-                positional_index[term][1][document_number].append(positional)
-
-            else:
-                positional_index[term][1][document_number] = [positional]
-
-        else:
-                positional_index[term]=[]
-
-                positional_index[term].append(1)
-
-                positional_index[term].append({})
-
-                positional_index[term][1][document_number]=[positional]
-
-    document_number+=1
-# print(positional_index)
-
-
-#\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-# query='fools fear '
-final_list =[[]for i in range(10)]
-
-for word in q.split():
-    for key in positional_index[word][1].keys():
-
-        if final_list[key-1]!=[]:
-            if final_list[key-1][-1]==positional_index[word][1][key][0]-1:
-                final_list[key-1].append(positional_index[word][1][key][0])
-        else:
-            final_list[key-1].append(positional_index[word][1][key][0])
-print(final_list)
-for position,list in enumerate(final_list,start=1):
-    # print(position,list)
-    if len(list)== len(q.split()):
-        print(position)
-
-
 #//////////////////////////////////////////
 
 # q= 'antony brutus'
@@ -176,53 +185,64 @@ def get_w_tf (x):
     except:
         return 0
 
+def d_query(q):
+    query = pd.DataFrame(index=normalized_term_freq.index)
+    query['tf'] = [ 1 if x in q.split() else 0 for x in (normalized_term_freq.index)]
+    query['w_tf'] = query['tf'].apply(lambda x :get_w_tf(x))
+    product=normalized_term_freq.multiply(query['w_tf'],axis=0)
+    query['idf']=tfd['idf']*query['w_tf']
 
-query = pd.DataFrame(index=normalized_term_freq.index)
-query['tf'] = [ 1 if x in q.split() else 0 for x in (normalized_term_freq.index)]
-query['w_tf'] = query['tf'].apply(lambda x :get_w_tf(x))
-product=normalized_term_freq.multiply(query['w_tf'],axis=0)
-query['idf']=tfd['idf']*query['w_tf']
+    query['tf*idf']=tfd['idf']*query['w_tf']
 
-query['tf*idf']=tfd['idf']*query['w_tf']
+    query['norm'] =0
+    for i in range(len(query)):
+        query['norm'].iloc[i]=float(query['idf'].iloc[i])/math.sqrt(sum(query['idf'].values**2))
+    product2= product.multiply(query['norm'],axis=0)
+    #///
+    math.sqrt(sum([x**2 for x in query['idf'].loc[q.split()]])) 
 
-query['norm'] =0
-for i in range(len(query)):
-    query['norm'].iloc[i]=float(query['idf'].iloc[i])/math.sqrt(sum(query['idf'].values**2))
-product2= product.multiply(query['norm'],axis=0)
-#///
-math.sqrt(sum([x**2 for x in query['idf'].loc[q.split()]])) 
+    product2.loc[q.split()].values
 
-product2.loc[q.split()].values
+    scores={}
+    for col in product2.columns:
+        if 0 in product2[col].loc[q.split()].values:
+            pass
+        else:
+            scores[col]= product2[col].sum()
+    print()
+    print("************************ Query Details ************************")
+    print(query.loc[q.split()])
+    # print(product2)
+    # doc1 doc2
 
-scores={}
-for col in product2.columns:
-    if 0 in product2[col].loc[q.split()].values:
-        pass
-    else:
-        scores[col]= product2[col].sum()
+    product2[(scores.keys())].loc[q.split()]
+    prod_res= product2[(scores.keys())].loc[q.split()]
+    print()
+    print('**************  Product (query*matched doc)***************')
+    print(prod_res)
+    print()
+    print('************************ Sum ************************')
+    print(scores)
+    print()
+    print('************************ Query length ************************')
+    q_len = math.sqrt(sum([x**2 for x in query['idf'].loc[q.split()]]))
+    print(q_len)
+    #sum == cosine similarity (q , doc)
+    print()
+    print('************************ Cosine Simliarity ************************')
+    print(prod_res.sum())
 
-print(query.loc[q.split()])
-# print(product2)
-
-
-# doc1 doc2
-product2[(scores.keys())].loc[q.split()]
-prod_res= product2[(scores.keys())].loc[q.split()]
-print(prod_res)
-print(scores)
-#sum == cosine similarity (q , doc)
-print(prod_res.sum())
-
-# returned docs
-ranked =sorted(scores.items(),key=lambda x : x[1], reverse=True)
-print("Ranking")
-for doc in ranked:
-    
-    print(doc[0],end=' ')
-
+    # returned docs
+    ranked =sorted(scores.items(),key=lambda x : x[1], reverse=True) 
+    print()
+    print("************************ Ranking ************************")
+    for doc in ranked:
+        
+        print(doc[0],end=' ')
 
 
-
+q = input('Enter Query for print Query details and matched document:   ')
+d_query(q)
 
 
 
