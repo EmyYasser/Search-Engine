@@ -165,14 +165,59 @@ for position,list in enumerate(final_list,start=1):
         print(position)
 
 
+#//////////////////////////////////////////
+
+q= 'antony brutus'
+
+def get_w_tf (x):
+    try:
+        return math.log10(x)+1
+    except:
+        return 0
 
 
+query = pd.DataFrame(index=normalized_term_freq.index)
+query['tf'] = [ 1 if x in q.split() else 0 for x in (normalized_term_freq.index)]
+query['w_tf'] = query['tf'].apply(lambda x :get_w_tf(x))
+product=normalized_term_freq.multiply(query['w_tf'],axis=0)
+query['idf']=tfd['idf']*query['w_tf']
+
+query['tf*idf']=tfd['idf']*query['w_tf']
+
+query['norm'] =0
+for i in range(len(query)):
+    query['norm'].iloc[i]=float(query['idf'].iloc[i])/math.sqrt(sum(query['idf'].values**2))
+product2= product.multiply(query['norm'],axis=0)
+#///
+math.sqrt(sum([x**2 for x in query['idf'].loc[q.split()]])) 
+
+product2.loc[q.split()].values
+
+scores={}
+for col in product2.columns:
+    if 0 in product2[col].loc[q.split()].values:
+        pass
+    else:
+        scores[col]= product2[col].sum()
+
+print(query.loc[q.split()])
+# print(product2)
 
 
+# doc1 doc2
+product2[(scores.keys())].loc[q.split()]
+prod_res= product2[(scores.keys())].loc[q.split()]
+print(prod_res)
+print(scores)
+#sum == cosine similarity (q , doc)
+print(prod_res.sum())
 
-
-
-
+# returned docs
+ranked =sorted(scores.items(),key=lambda x : x[1], reverse=True)
+print("Ranking")
+for doc in ranked:
+    
+    print(doc[0],end=' ')
 
 
 
